@@ -37,11 +37,52 @@ In `.env`:
 | Variabele           | Vereist | Omschrijving                                                      |
 | ------------------- | ------- | ---------------------------------------------------------------- |
 | `ANTHROPIC_API_KEY` | ja\*    | Sleutel voor de AI-waardering. Via <https://console.anthropic.com/>. |
+| `APP_PIN`           | aanbevolen | Pincode om login te vereisen. Leeg = app is open (geen login). |
+| `SESSION_SECRET`    | nee     | Geheim voor sessiecookies (wordt anders automatisch gegenereerd). |
 | `PORT`              | nee     | Poort (standaard 3000).                                          |
 | `CLAUDE_MODEL`      | nee     | Ander Claude-model (standaard `claude-opus-4-8`).               |
 
 \* Alleen nodig voor de waardering. RDW ophalen, opslaan en exporteren werkt
 ook zonder API-sleutel.
+
+## Beveiliging
+
+De app heeft twee beveiligingslagen die je kunt combineren:
+
+### 1. Pincode-login (in de app)
+
+Zet `APP_PIN` in je `.env` (bijv. `APP_PIN=4821`). Dan verschijnt er een
+inlogscherm en zijn alle gegevens en acties afgeschermd achter die pincode.
+De sessie blijft 30 dagen geldig (cookie), met een "Uitloggen"-knop rechtsboven.
+Online draait dit altijd over HTTPS, dus de pincode gaat versleuteld over de lijn.
+Laat je `APP_PIN` leeg, dan is de app open.
+
+> Tip: kies een pincode van minimaal 5–6 tekens. Voor een online-app is dit je
+> belangrijkste slot.
+
+### 2. VPN — alleen jouw eigen apparaten (netwerklaag)
+
+Een echte VPN zit niet *in* de app-code maar is een netwerklaag eromheen. De
+makkelijkste moderne oplossing is **[Tailscale](https://tailscale.com)**: een
+privé-netwerk waarbij alleen jouw eigen apparaten (laptop, telefoon) de app
+kunnen bereiken — de buitenwereld ziet niets.
+
+Aanpak op een eigen server/VPS:
+
+```bash
+# 1. Installeer Tailscale op de server en op je telefoon, log op beide in
+#    op hetzelfde account: https://tailscale.com/download
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+
+# 2. Draai de app zoals normaal (npm start of via Docker).
+# 3. Benader de app op je telefoon via het Tailscale-adres van de server,
+#    bijv. http://100.x.y.z:3000 of de MagicDNS-naam http://server:3000
+```
+
+Zo is de app **alleen** bereikbaar binnen jouw Tailscale-netwerk én daarachter
+nog eens afgeschermd met de pincode. Dit is de meest privacyvriendelijke opzet
+voor gebruik op locatie.
 
 ## Online zetten (mobiel gebruik op locatie)
 

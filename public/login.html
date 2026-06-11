@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inloggen · Auto Taxatie</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <form id="loginForm" class="card login-card">
+      <h1>Auto Taxatie</h1>
+      <p class="sub-login">Voer je pincode in</p>
+      <input
+        type="password"
+        id="pin"
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="••••"
+        aria-label="Pincode"
+        autofocus
+      />
+      <button type="submit" class="primary">Inloggen</button>
+      <p id="loginError" class="status error"></p>
+    </form>
+  </div>
+
+  <script>
+    // Als er geen pincode is ingesteld, of al ingelogd: door naar de app.
+    fetch('/api/me').then((r) => r.json()).then((s) => {
+      if (!s.pinRequired || s.authed) window.location.href = '/';
+    }).catch(() => {});
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('loginError');
+      err.textContent = '';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: document.getElementById('pin').value }),
+        });
+        if (res.ok) {
+          window.location.href = '/';
+        } else {
+          const d = await res.json().catch(() => ({}));
+          err.textContent = d.error || 'Inloggen mislukt';
+          document.getElementById('pin').value = '';
+        }
+      } catch {
+        err.textContent = 'Netwerkfout';
+      }
+    });
+  </script>
+</body>
+</html>

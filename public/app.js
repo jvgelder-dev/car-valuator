@@ -15,6 +15,10 @@ async function api(path, opts = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...opts,
   });
+  if (res.status === 401) {
+    window.location.href = '/login';
+    throw new Error('Niet ingelogd');
+  }
   if (!res.ok) {
     let msg = `Fout ${res.status}`;
     try { msg = (await res.json()).error || msg; } catch { /* leeg */ }
@@ -201,5 +205,15 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
+
+// Toon de uitlog-knop alleen als er een pincode is ingesteld.
+fetch('/api/me').then((r) => r.json()).then((s) => {
+  if (s.pinRequired) $('logoutBtn').classList.remove('hidden');
+}).catch(() => {});
+
+$('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+});
 
 laadCars().catch((err) => setStatus(err.message, true));
