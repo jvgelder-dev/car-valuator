@@ -311,15 +311,76 @@ $('modalClose').addEventListener('click', () => $('detailModal').classList.add('
 $('detailModal').addEventListener('click', (e) => { if (e.target === $('detailModal')) $('detailModal').classList.add('hidden'); });
 
 // CSV-export in de browser.
-$('exportBtn').addEventListener('click', () => {
+// Categorieën voor het referentietabblad (zelfde waarden als het rekenmodel).
+const CATEGORIEEN = [
+  { naam: 'A-segment (stadsauto)', type: 'degressief', rates: [0.18, 0.13, 0.10, 0.07], bron: 'ANWB Koerslijst: ~10%/jr, meest waardevast' },
+  { naam: 'B/C-segment (compact/gezins)', type: 'degressief', rates: [0.20, 0.15, 0.11, 0.08], bron: 'ANWB/AutoRAI: 10–15%/jr' },
+  { naam: 'D-segment (hogere middenklasse)', type: 'degressief', rates: [0.24, 0.17, 0.13, 0.09], bron: 'iSeeCars: 15–18%/jr' },
+  { naam: 'E/F-segment (premium/luxe)', type: 'degressief', rates: [0.22, 0.16, 0.10, 0.08], bron: 'iSeeCars: luxe ~48% in 5 jr' },
+  { naam: 'Personenauto (gemiddeld)', type: 'degressief', rates: [0.25, 0.18, 0.13, 0.09], bron: 'ANWB/Univé/iSeeCars: 10–20%/jr' },
+  { naam: 'Hybride', type: 'degressief', rates: [0.12, 0.10, 0.07, 0.05], bron: 'iSeeCars/Auto1: ~35% in 5 jr' },
+  { naam: 'Elektrisch (BEV)', type: 'degressief', rates: [0.24, 0.18, 0.12, 0.10], bron: 'iSeeCars/Gaspedaal: ~49–57% in 5 jr' },
+  { naam: 'Bestel-/bedrijfsauto', type: 'lineair', perJaar: 0.18, vloer: 0.08, bron: 'Rabobank/Univé: ~18%/jr lineair' },
+  { naam: 'Vrachtauto/trekker', type: 'lineair', perJaar: 0.12, vloer: 0.10, bron: 'Commerciële schatting' },
+];
+const REF_JAREN = 15;
+
+$('exportBtn').addEventListener('click', async () => {
   const cars = load();
   if (!cars.length) return setStatus('Nog niets om te exporteren.', true);
-  const kols = ['kenteken', 'merk', 'handelsbenaming', 'voertuigsoort', 'brandstof', 'bouwjaar', 'apk_vervaldatum', 'km_stand', 'km_bron', 'catalogusprijs', 'marktwaarde_min', 'marktwaarde_max', 'liquidatiewaarde_min', 'liquidatiewaarde_max', 'waardering_toelichting'];
-  const esc2 = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const csv = [kols.join(';'), ...cars.map((c) => kols.map((k) => esc2(c[k])).join(';'))].join('\n');
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  if (typeof ExcelJS === 'undefined') return setStatus('Excel-bibliotheek nog niet geladen, probeer het zo opnieuw.', true);
+
+  const wb = new ExcelJS.Workbook();
+
+  // Tabblad 1: auto's
+  const ws = wb.addWorksheet('Autos');
+  ws.columns = [
+    { header: 'Kenteken', key: 'kenteken', width: 12 },
+    { header: 'Merk', key: 'merk', width: 16 },
+    { header: 'Model/uitvoering', key: 'handelsbenaming', width: 24 },
+    { header: 'Soort', key: 'voertuigsoort', width: 16 },
+    { header: 'Brandstof', key: 'brandstof', width: 14 },
+    { header: 'Bouwjaar', key: 'bouwjaar', width: 10 },
+    { header: 'APK tot', key: 'apk_vervaldatum', width: 12 },
+    { header: 'Km-stand', key: 'km_stand', width: 12 },
+    { header: 'Km-bron', key: 'km_bron', width: 14 },
+    { header: 'Cat.prijs (€)', key: 'catalogusprijs', width: 13 },
+    { header: 'Marktwaarde min (€)', key: 'marktwaarde_min', width: 18 },
+    { header: 'Marktwaarde max (€)', key: 'marktwaarde_max', width: 18 },
+    { header: 'Liquidatie min (€)', key: 'liquidatiewaarde_min', width: 18 },
+    { header: 'Liquidatie max (€)', key: 'liquidatiewaarde_max', width: 18 },
+    { header: 'Grondslag', key: 'waardering_grondslag', width: 50 },
+    { header: 'Toelichting', key: 'waardering_toelichting', width: 50 },
+  ];
+  ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getRow(1).eachCell((c) => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } }; });
+  for (const car of cars) ws.addRow(car);
+
+  // Tabblad 2: afschrijvingscurves
+  const ws2 = wb.addWorksheet('Afschrijvingscurves');
+  ws2.mergeCells(1, 1, 1, REF_JAREN + 4);
+  ws2.getCell('A1').value = 'Afschrijvingscurves — restwaarde als % van de catalogusprijs per leeftijdsjaar';
+  ws2.getCell('A1').font = { bold: true, size: 12 };
+  const head = ['Categorie', 'Basis (bron)', 'Nieuw'];
+  for (let j = 1; j <= REF_JAREN; j++) head.push(`${j} jr`);
+  head.push('Verlies na 5 jr');
+  const hr = ws2.addRow(head);
+  hr.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  hr.eachCell((c) => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } }; });
+  for (const cat of CATEGORIEEN) {
+    const rij = [cat.naam, cat.bron, '100%'];
+    for (let j = 1; j <= REF_JAREN; j++) rij.push(`${Math.round(restwaarde(cat, j) * 100)}%`);
+    rij.push(`${Math.round((1 - restwaarde(cat, 5)) * 100)}%`);
+    ws2.addRow(rij);
+  }
+  ws2.getColumn(1).width = 30; ws2.getColumn(2).width = 42;
+  for (let c = 3; c <= REF_JAREN + 4; c++) ws2.getColumn(c).width = 8;
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = `autos-${Date.now()}.csv`; a.click();
+  a.href = URL.createObjectURL(blob); a.download = `autos-${Date.now()}.xlsx`; a.click();
+  setStatus('Geëxporteerd naar Excel.');
 });
 
 function esc(s) {

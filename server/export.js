@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { categorieen, restwaarde } from './depreciation.js';
 
-const JAREN = 12; // aantal leeftijdsjaren in de referentietabel
+const JAREN = 15; // aantal leeftijdsjaren in de referentietabel
 
 function voegReferentietabelToe(wb) {
   const ws = wb.addWorksheet('Afschrijvingscurves');
