@@ -39,7 +39,7 @@ Gebruik websearch om actuele, vergelijkbare gegevens te vinden:
 - Marktwaarde: vergelijkbare advertenties op sites als Gaspedaal.nl, AutoScout24, Marktplaats en bij dealers. Let op bouwjaar, kilometerstand, uitvoering en brandstof.
 - Liquidatiewaarde: recente veilingresultaten/biedingen bij o.a. BVA Auctions, Troostwijk Auctions, Vavato en vergelijkbare zakelijke veilingen.
 
-Houd er rekening mee dat de liquidatiewaarde doorgaans 20-40% lager ligt dan de particuliere marktwaarde. Dit is een indicatie, geen formele taxatie.
+Bepaal de liquidatiewaarde door de marktwaarde te delen door een factor tussen 1,35 en 1,45 (afhankelijk van de auto: courante, gewilde auto's dichter bij 1,35; minder courante dichter bij 1,45). Dus: liquidatiewaarde = marktwaarde ÷ 1,35 tot 1,45. Gebruik de veilingresultaten als toets/onderbouwing, maar houd deze deler aan. Dit is een indicatie, geen formele taxatie.
 
 Geef je redenering kort weer. Sluit je antwoord AF met exact één JSON-blok in dit formaat (bedragen in hele euro's, zonder punten of valutateken):
 

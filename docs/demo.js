@@ -75,12 +75,15 @@ function rekenWaardering(car) {
   kmFactor = Math.min(1.15, Math.max(0.75, kmFactor));
 
   const markt = cat * behoud * kmFactor;
+  const marktMin = markt * 0.9;
+  const marktMax = markt * 1.1;
   return {
-    marktwaarde_min: Math.round((markt * 0.9) / 50) * 50,
-    marktwaarde_max: Math.round((markt * 1.1) / 50) * 50,
-    liquidatiewaarde_min: Math.round((markt * 0.62) / 50) * 50,
-    liquidatiewaarde_max: Math.round((markt * 0.78) / 50) * 50,
-    toelichting: `Rekenmodel-indicatie: catalogusprijs € ${Number(cat).toLocaleString('nl-NL')} × waardebehoud ${(behoud * 100).toFixed(0)}% (leeftijd ${leeftijd} jr) × km-correctie ${(kmFactor * 100).toFixed(0)}%. Liquidatiewaarde ≈ 62–78% van de marktwaarde. Indicatie, geen taxatie.`,
+    marktwaarde_min: Math.round(marktMin / 50) * 50,
+    marktwaarde_max: Math.round(marktMax / 50) * 50,
+    // Liquidatiewaarde = marktwaarde gedeeld door 1,35 (hoog) tot 1,45 (laag).
+    liquidatiewaarde_min: Math.round((marktMin / 1.45) / 50) * 50,
+    liquidatiewaarde_max: Math.round((marktMax / 1.35) / 50) * 50,
+    toelichting: `Rekenmodel-indicatie: catalogusprijs € ${Number(cat).toLocaleString('nl-NL')} × waardebehoud ${(behoud * 100).toFixed(0)}% (leeftijd ${leeftijd} jr) × km-correctie ${(kmFactor * 100).toFixed(0)}%. Liquidatiewaarde = marktwaarde ÷ 1,35–1,45. Indicatie, geen taxatie.`,
     waardering_bronnen: ['Rekenmodel op basis van RDW-catalogusprijs en CBS-kilometrage'],
     waardering_datum: new Date().toISOString(),
   };
@@ -152,18 +155,30 @@ function matchSoort(soort) {
   return 'Personenauto';
 }
 
-$('addForm').addEventListener('submit', (e) => {
+$('addForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const kenteken = $('kenteken').value.trim();
+  const merkInput = $('merk').value.trim();
+
+  // Eén-klik: is een kenteken ingevuld maar nog geen data opgehaald, haal dan
+  // nu de RDW-gegevens op voordat we toevoegen.
+  let rdw = laatsteRdw;
+  if (kenteken && !rdw && !merkInput) {
+    setStatus('RDW ophalen…');
+    try { rdw = await fetchRdwBrowser(kenteken); }
+    catch { rdw = null; } // niet gevonden of niet bereikbaar: voeg toe met alleen kenteken
+  }
+
   const car = {
     id: Date.now(),
-    kenteken: $('kenteken').value.trim() || null,
-    merk: $('merk').value.trim() || laatsteRdw?.merk || null,
-    handelsbenaming: $('handelsbenaming').value.trim() || laatsteRdw?.handelsbenaming || null,
-    voertuigsoort: $('voertuigsoort').value || null,
-    brandstof: $('brandstof').value.trim() || null,
-    bouwjaar: $('bouwjaar').value ? parseInt($('bouwjaar').value, 10) : null,
-    catalogusprijs: laatsteRdw?.catalogusprijs || null,
-    apk_vervaldatum: laatsteRdw?.apk_vervaldatum || null,
+    kenteken: kenteken || null,
+    merk: merkInput || rdw?.merk || null,
+    handelsbenaming: $('handelsbenaming').value.trim() || rdw?.handelsbenaming || null,
+    voertuigsoort: rdw?.voertuigsoort || $('voertuigsoort').value || null,
+    brandstof: $('brandstof').value.trim() || rdw?.brandstof || null,
+    bouwjaar: $('bouwjaar').value ? parseInt($('bouwjaar').value, 10) : (rdw?.bouwjaar || null),
+    catalogusprijs: rdw?.catalogusprijs || null,
+    apk_vervaldatum: rdw?.apk_vervaldatum || null,
   };
   if (!car.kenteken && !car.merk) return setStatus('Vul een kenteken in of voer handmatig merk/model in.', true);
 
@@ -172,7 +187,7 @@ $('addForm').addEventListener('submit', (e) => {
 
   const cars = load(); cars.unshift(car); save(cars);
   e.target.reset(); $('rdwPreview').classList.add('hidden'); laatsteRdw = null;
-  setStatus('Toegevoegd.'); render();
+  setStatus(`Toegevoegd: ${car.merk || car.kenteken}.`); render();
 });
 
 function render() {
