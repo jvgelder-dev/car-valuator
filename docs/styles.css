@@ -169,6 +169,15 @@ th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; colo
 }
 .logout-btn:hover { background: rgba(255, 255, 255, 0.22); }
 
+/* Import-paneel */
+.import-panel { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+.import-panel summary { cursor: pointer; font-size: 0.9rem; color: var(--accent); font-weight: 600; }
+textarea {
+  width: 100%; font-size: 0.95rem; padding: 10px 12px; margin: 8px 0;
+  border: 1px solid var(--line); border-radius: 8px; font-family: inherit; resize: vertical;
+}
+textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+
 @media (max-width: 600px) {
   header h1 { font-size: 1.2rem; }
   .row button { width: 100%; }

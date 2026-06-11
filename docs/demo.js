@@ -250,4 +250,65 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
+// --- Meerdere kentekens importeren ---
+function parseKentekens(text) {
+  return [...new Set(
+    text.split(/[\n,;\s]+/)
+      .map((s) => s.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''))
+      .filter((s) => s.length >= 4 && s.length <= 8),
+  )];
+}
+
+$('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const huidig = $('importText').value.trim();
+    $('importText').value = (huidig ? huidig + '\n' : '') + reader.result;
+  };
+  reader.readAsText(file);
+});
+
+$('importBtn').addEventListener('click', async () => {
+  const kentekens = parseKentekens($('importText').value);
+  const st = $('importStatus');
+  if (!kentekens.length) { st.textContent = 'Geen geldige kentekens gevonden.'; st.classList.add('error'); return; }
+  st.classList.remove('error');
+  $('importBtn').disabled = true;
+
+  const cars = load();
+  const bestaand = new Set(cars.map((c) => (c.kenteken || '').toUpperCase()));
+  let ok = 0; let overgeslagen = 0; const mislukt = [];
+
+  for (let i = 0; i < kentekens.length; i++) {
+    const k = kentekens[i];
+    st.textContent = `Bezig: ${i + 1}/${kentekens.length} (${k})…`;
+    if (bestaand.has(k)) { overgeslagen++; continue; }
+    try {
+      const d = await fetchRdwBrowser(k);
+      const car = {
+        id: Date.now() + i,
+        kenteken: d.kenteken, merk: d.merk, handelsbenaming: d.handelsbenaming,
+        voertuigsoort: d.voertuigsoort, brandstof: d.brandstof, bouwjaar: d.bouwjaar,
+        catalogusprijs: d.catalogusprijs, apk_vervaldatum: d.apk_vervaldatum,
+      };
+      car.km_stand = schatKilometerstand(car);
+      car.km_bron = car.km_stand != null ? 'cbs-schatting' : null;
+      cars.unshift(car); bestaand.add(k); ok++;
+    } catch {
+      mislukt.push(k);
+    }
+  }
+
+  save(cars); render();
+  $('importBtn').disabled = false;
+  $('importText').value = ''; $('importFile').value = '';
+  let melding = `Klaar: ${ok} toegevoegd`;
+  if (overgeslagen) melding += `, ${overgeslagen} al in lijst`;
+  if (mislukt.length) melding += `, ${mislukt.length} niet gevonden (${mislukt.join(', ')})`;
+  st.textContent = melding + '.';
+  st.classList.toggle('error', mislukt.length > 0);
+});
+
 render();

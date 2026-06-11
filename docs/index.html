@@ -66,6 +66,17 @@
         </div>
         <p class="hint">Laat de kilometerstand leeg om automatisch te schatten op basis van CBS-cijfers (2024).</p>
       </form>
+
+      <details id="importPanel" class="import-panel">
+        <summary>Meerdere kentekens importeren</summary>
+        <p class="hint">Plak één kenteken per regel (of gescheiden door komma/spatie), of upload een .txt/.csv-bestand.</p>
+        <textarea id="importText" rows="5" placeholder="12-ABC-3&#10;45-XYZ-6&#10;..."></textarea>
+        <div class="row">
+          <input type="file" id="importFile" accept=".txt,.csv" />
+          <button type="button" id="importBtn" class="primary">Importeren</button>
+        </div>
+        <p id="importStatus" class="status"></p>
+      </details>
     </section>
 
     <section class="card lijst">

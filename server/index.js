@@ -71,7 +71,7 @@ app.get('/api/cars', requireAuth, wrap(async (_req, res) => {
 }));
 
 app.post('/api/cars', requireAuth, wrap(async (req, res) => {
-  const body = req.body || {};
+  const { requireRdw, ...body } = req.body || {};
   let data = { ...body };
 
   // Als een kenteken is opgegeven maar geen RDW-data, haal die alsnog op.
@@ -80,7 +80,10 @@ app.post('/api/cars', requireAuth, wrap(async (req, res) => {
       const { normalized, raw } = await fetchRdw(data.kenteken);
       data = { ...normalized, ...data, rdw_raw: raw };
     } catch (err) {
-      if (err.status !== 404) throw err; // 404: handmatige invoer toestaan
+      // Bij import (requireRdw) is een onbekend kenteken een fout;
+      // bij handmatige invoer staan we het toe.
+      if (err.status === 404 && requireRdw) throw err;
+      if (err.status !== 404) throw err;
     }
   }
 

@@ -216,4 +216,50 @@ $('logoutBtn').addEventListener('click', async () => {
   window.location.href = '/login';
 });
 
+// --- Meerdere kentekens importeren ---
+function parseKentekens(text) {
+  return [...new Set(
+    text.split(/[\n,;\s]+/)
+      .map((s) => s.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''))
+      .filter((s) => s.length >= 4 && s.length <= 8),
+  )];
+}
+
+$('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const huidig = $('importText').value.trim();
+    $('importText').value = (huidig ? huidig + '\n' : '') + reader.result;
+  };
+  reader.readAsText(file);
+});
+
+$('importBtn').addEventListener('click', async () => {
+  const kentekens = parseKentekens($('importText').value);
+  const st = $('importStatus');
+  if (!kentekens.length) { st.textContent = 'Geen geldige kentekens gevonden.'; st.classList.add('error'); return; }
+  st.classList.remove('error');
+  $('importBtn').disabled = true;
+
+  let ok = 0; const mislukt = [];
+  for (let i = 0; i < kentekens.length; i++) {
+    const k = kentekens[i];
+    st.textContent = `Bezig: ${i + 1}/${kentekens.length} (${k})…`;
+    try {
+      await api('/api/cars', { method: 'POST', body: JSON.stringify({ kenteken: k, requireRdw: true }) });
+      ok++;
+    } catch (err) {
+      mislukt.push(k);
+    }
+  }
+
+  $('importBtn').disabled = false;
+  $('importText').value = ''; $('importFile').value = '';
+  st.textContent = `Klaar: ${ok} toegevoegd${mislukt.length ? `, ${mislukt.length} niet gevonden (${mislukt.join(', ')})` : ''}.`;
+  st.classList.toggle('error', mislukt.length > 0);
+  await laadCars();
+});
+
 laadCars().catch((err) => setStatus(err.message, true));
