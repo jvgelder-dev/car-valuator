@@ -1,5 +1,7 @@
 import ExcelJS from 'exceljs';
-import { categorieen, restwaarde } from './depreciation.js';
+import { categorieen, restwaarde, VOORBEELD_JAREN } from './depreciation.js';
+
+const euro = (n) => Math.round(n / 50) * 50;
 
 const JAREN = 15; // aantal leeftijdsjaren in de referentietabel
 
@@ -30,8 +32,26 @@ function voegReferentietabelToe(wb) {
   ws.getColumn(2).width = 42;
   for (let c = 3; c <= JAREN + 3; c++) ws.getColumn(c).width = 8;
 
+  // Voorbeeld in euro's: restwaarde bij een representatieve nieuwprijs per categorie.
   ws.addRow([]);
-  const noot = ws.addRow(['Degressieve afschrijving (sneller in de eerste jaren); bestel/vracht lineair. Indicatie op basis van ANWB/BOVAG, iSeeCars, Belastingdienst en marktdata.']);
+  const titel = ws.addRow(['Voorbeeld in euro’s — restwaarde bij een representatieve nieuwprijs per categorie']);
+  ws.mergeCells(titel.number, 1, titel.number, JAREN + 3);
+  titel.getCell(1).font = { bold: true, size: 12 };
+
+  const euroHead = ['Categorie', 'Voorbeeld nieuwprijs (€)'];
+  for (const j of VOORBEELD_JAREN) euroHead.push(`na ${j} jr (€)`);
+  const ehr = ws.addRow(euroHead);
+  ehr.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  ehr.eachCell((cell) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } }; });
+
+  for (const cat of categorieen) {
+    const rij = [cat.naam, euro(cat.voorbeeldPrijs)];
+    for (const j of VOORBEELD_JAREN) rij.push(euro(restwaarde(cat, j) * cat.voorbeeldPrijs));
+    ws.addRow(rij);
+  }
+
+  ws.addRow([]);
+  const noot = ws.addRow(['Degressieve afschrijving (sneller in de eerste jaren); bestel/vracht lineair. Bedragen zijn indicaties op basis van ANWB/BOVAG, iSeeCars, Belastingdienst en marktdata.']);
   ws.mergeCells(noot.number, 1, noot.number, JAREN + 3);
   noot.getCell(1).font = { italic: true, color: { argb: 'FF6B7280' } };
 }

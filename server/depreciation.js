@@ -5,24 +5,27 @@
 
 export const categorieen = [
   { naam: 'A-segment (stadsauto)', type: 'degressief', rates: [0.18, 0.13, 0.10, 0.07],
-    bron: 'ANWB Koerslijst: ~10%/jr, meest waardevast' },
+    voorbeeldPrijs: 18000, bron: 'ANWB Koerslijst: ~10%/jr, meest waardevast' },
   { naam: 'B/C-segment (compact/gezins)', type: 'degressief', rates: [0.20, 0.15, 0.11, 0.08],
-    bron: 'ANWB/AutoRAI: 10–15%/jr, hoge occasionvraag' },
+    voorbeeldPrijs: 30000, bron: 'ANWB/AutoRAI: 10–15%/jr, hoge occasionvraag' },
   { naam: 'D-segment (hogere middenklasse)', type: 'degressief', rates: [0.24, 0.17, 0.13, 0.09],
-    bron: 'iSeeCars: 15–18%/jr, bovengemiddeld verlies' },
+    voorbeeldPrijs: 50000, bron: 'iSeeCars: 15–18%/jr, bovengemiddeld verlies' },
   { naam: 'E/F-segment (premium/luxe)', type: 'degressief', rates: [0.22, 0.16, 0.10, 0.08],
-    bron: 'iSeeCars: luxe ~48% verlies in 5 jr' },
+    voorbeeldPrijs: 80000, bron: 'iSeeCars: luxe ~48% verlies in 5 jr' },
   { naam: 'Personenauto (gemiddeld)', type: 'degressief', rates: [0.25, 0.18, 0.13, 0.09],
-    bron: 'ANWB/Univé/iSeeCars: gemiddeld 10–20%/jr' },
+    voorbeeldPrijs: 30000, bron: 'ANWB/Univé/iSeeCars: gemiddeld 10–20%/jr' },
   { naam: 'Hybride', type: 'degressief', rates: [0.12, 0.10, 0.07, 0.05],
-    bron: 'iSeeCars/Auto1: waardevast, ~35% verlies in 5 jr' },
+    voorbeeldPrijs: 38000, bron: 'iSeeCars/Auto1: waardevast, ~35% verlies in 5 jr' },
   { naam: 'Elektrisch (BEV)', type: 'degressief', rates: [0.24, 0.18, 0.12, 0.10],
-    bron: 'iSeeCars/Gaspedaal: ~49–57% verlies in 5 jr; markt daalt sinds 2023' },
+    voorbeeldPrijs: 42000, bron: 'iSeeCars/Gaspedaal: ~49–57% verlies in 5 jr; markt daalt sinds 2023' },
   { naam: 'Bestel-/bedrijfsauto', type: 'lineair', perJaar: 0.18, vloer: 0.08,
-    bron: 'Rabobank/Univé: ~18%/jr lineair, na 5 jr ~10% restwaarde' },
+    voorbeeldPrijs: 30000, bron: 'Rabobank/Univé: ~18%/jr lineair, na 5 jr ~10% restwaarde' },
   { naam: 'Vrachtauto/trekker', type: 'lineair', perJaar: 0.12, vloer: 0.10,
-    bron: 'Commerciële schatting (intensief gebruik)' },
+    voorbeeldPrijs: 90000, bron: 'Commerciële schatting (intensief gebruik)' },
 ];
+
+// Leeftijdsmijlpalen voor het euro-voorbeeld in de referentietabel.
+export const VOORBEELD_JAREN = [1, 3, 5, 8, 12];
 
 // Restwaarde als fractie van de catalogusprijs (degressief of lineair).
 export function restwaarde(profiel, leeftijd) {

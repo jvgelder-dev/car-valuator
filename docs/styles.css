@@ -148,6 +148,14 @@ th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; colo
 .bronnen { font-size: 0.82rem; }
 .bronnen li { margin-bottom: 3px; word-break: break-word; }
 
+/* Toegangscode-overlay (demo) */
+.pin-gate {
+  position: fixed; inset: 0; z-index: 100;
+  background: #f1f5f9;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.pin-gate.hidden { display: none; }
+
 /* Inlogscherm */
 .login-wrap {
   min-height: 100vh;

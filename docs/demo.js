@@ -9,6 +9,24 @@ const $ = (id) => document.getElementById(id);
 const STORE_KEY = 'autotaxatie_demo_cars';
 const HUIDIG_JAAR = new Date().getFullYear();
 
+// --- Toegangscode-overlay voor de demo ---
+// Let op: dit is een lichte drempel op een openbare pagina, geen harde beveiliging
+// (de code is een SHA-256-hash, maar een statische publieke pagina is nooit echt
+// af te schermen). Voor echte afscherming: de volledige app met server-login of VPN.
+const DEMO_PIN_HASH = '8f55b929ae5e8a5247ddeba35274a1a7f206fbf21b379f9e281edbc9a33b8e4e';
+async function sha256(tekst) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tekst));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+function ontgrendel() { $('pinGate')?.classList.add('hidden'); }
+if (sessionStorage.getItem('demo_unlocked') === '1') ontgrendel();
+$('pinForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ingevoerd = (await sha256($('gatePin').value.trim())) === DEMO_PIN_HASH;
+  if (ingevoerd) { sessionStorage.setItem('demo_unlocked', '1'); ontgrendel(); }
+  else { $('gateError').textContent = 'Onjuiste toegangscode'; $('gatePin').value = ''; }
+});
+
 const euro = (n) => (n == null ? null : '€ ' + Number(Math.round(n)).toLocaleString('nl-NL'));
 const km = (n) => (n == null ? '—' : Number(n).toLocaleString('nl-NL') + ' km');
 
@@ -313,17 +331,19 @@ $('detailModal').addEventListener('click', (e) => { if (e.target === $('detailMo
 // CSV-export in de browser.
 // Categorieën voor het referentietabblad (zelfde waarden als het rekenmodel).
 const CATEGORIEEN = [
-  { naam: 'A-segment (stadsauto)', type: 'degressief', rates: [0.18, 0.13, 0.10, 0.07], bron: 'ANWB Koerslijst: ~10%/jr, meest waardevast' },
-  { naam: 'B/C-segment (compact/gezins)', type: 'degressief', rates: [0.20, 0.15, 0.11, 0.08], bron: 'ANWB/AutoRAI: 10–15%/jr' },
-  { naam: 'D-segment (hogere middenklasse)', type: 'degressief', rates: [0.24, 0.17, 0.13, 0.09], bron: 'iSeeCars: 15–18%/jr' },
-  { naam: 'E/F-segment (premium/luxe)', type: 'degressief', rates: [0.22, 0.16, 0.10, 0.08], bron: 'iSeeCars: luxe ~48% in 5 jr' },
-  { naam: 'Personenauto (gemiddeld)', type: 'degressief', rates: [0.25, 0.18, 0.13, 0.09], bron: 'ANWB/Univé/iSeeCars: 10–20%/jr' },
-  { naam: 'Hybride', type: 'degressief', rates: [0.12, 0.10, 0.07, 0.05], bron: 'iSeeCars/Auto1: ~35% in 5 jr' },
-  { naam: 'Elektrisch (BEV)', type: 'degressief', rates: [0.24, 0.18, 0.12, 0.10], bron: 'iSeeCars/Gaspedaal: ~49–57% in 5 jr' },
-  { naam: 'Bestel-/bedrijfsauto', type: 'lineair', perJaar: 0.18, vloer: 0.08, bron: 'Rabobank/Univé: ~18%/jr lineair' },
-  { naam: 'Vrachtauto/trekker', type: 'lineair', perJaar: 0.12, vloer: 0.10, bron: 'Commerciële schatting' },
+  { naam: 'A-segment (stadsauto)', type: 'degressief', rates: [0.18, 0.13, 0.10, 0.07], voorbeeldPrijs: 18000, bron: 'ANWB Koerslijst: ~10%/jr, meest waardevast' },
+  { naam: 'B/C-segment (compact/gezins)', type: 'degressief', rates: [0.20, 0.15, 0.11, 0.08], voorbeeldPrijs: 30000, bron: 'ANWB/AutoRAI: 10–15%/jr' },
+  { naam: 'D-segment (hogere middenklasse)', type: 'degressief', rates: [0.24, 0.17, 0.13, 0.09], voorbeeldPrijs: 50000, bron: 'iSeeCars: 15–18%/jr' },
+  { naam: 'E/F-segment (premium/luxe)', type: 'degressief', rates: [0.22, 0.16, 0.10, 0.08], voorbeeldPrijs: 80000, bron: 'iSeeCars: luxe ~48% in 5 jr' },
+  { naam: 'Personenauto (gemiddeld)', type: 'degressief', rates: [0.25, 0.18, 0.13, 0.09], voorbeeldPrijs: 30000, bron: 'ANWB/Univé/iSeeCars: 10–20%/jr' },
+  { naam: 'Hybride', type: 'degressief', rates: [0.12, 0.10, 0.07, 0.05], voorbeeldPrijs: 38000, bron: 'iSeeCars/Auto1: ~35% in 5 jr' },
+  { naam: 'Elektrisch (BEV)', type: 'degressief', rates: [0.24, 0.18, 0.12, 0.10], voorbeeldPrijs: 42000, bron: 'iSeeCars/Gaspedaal: ~49–57% in 5 jr' },
+  { naam: 'Bestel-/bedrijfsauto', type: 'lineair', perJaar: 0.18, vloer: 0.08, voorbeeldPrijs: 30000, bron: 'Rabobank/Univé: ~18%/jr lineair' },
+  { naam: 'Vrachtauto/trekker', type: 'lineair', perJaar: 0.12, vloer: 0.10, voorbeeldPrijs: 90000, bron: 'Commerciële schatting' },
 ];
 const REF_JAREN = 15;
+const VOORBEELD_JAREN = [1, 3, 5, 8, 12];
+const euroAf = (n) => Math.round(n / 50) * 50;
 
 $('exportBtn').addEventListener('click', async () => {
   const cars = load();
@@ -375,6 +395,22 @@ $('exportBtn').addEventListener('click', async () => {
   }
   ws2.getColumn(1).width = 30; ws2.getColumn(2).width = 42;
   for (let c = 3; c <= REF_JAREN + 4; c++) ws2.getColumn(c).width = 8;
+
+  // Voorbeeld in euro's per categorie.
+  ws2.addRow([]);
+  const t2 = ws2.addRow(['Voorbeeld in euro’s — restwaarde bij een representatieve nieuwprijs per categorie']);
+  ws2.mergeCells(t2.number, 1, t2.number, REF_JAREN + 4);
+  t2.getCell(1).font = { bold: true, size: 12 };
+  const eh = ['Categorie', 'Voorbeeld nieuwprijs (€)'];
+  for (const j of VOORBEELD_JAREN) eh.push(`na ${j} jr (€)`);
+  const ehr = ws2.addRow(eh);
+  ehr.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  ehr.eachCell((c) => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } }; });
+  for (const cat of CATEGORIEEN) {
+    const rij = [cat.naam, euroAf(cat.voorbeeldPrijs)];
+    for (const j of VOORBEELD_JAREN) rij.push(euroAf(restwaarde(cat, j) * cat.voorbeeldPrijs));
+    ws2.addRow(rij);
+  }
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

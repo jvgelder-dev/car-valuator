@@ -14,6 +14,16 @@
   </style>
 </head>
 <body>
+  <div id="pinGate" class="pin-gate">
+    <form id="pinForm" class="card login-card">
+      <h1>Auto Taxatie</h1>
+      <p class="sub-login">Voer de toegangscode in</p>
+      <input type="password" id="gatePin" inputmode="numeric" autocomplete="off" placeholder="••••••" aria-label="Toegangscode" autofocus />
+      <button class="primary" type="submit">Toegang</button>
+      <p id="gateError" class="status error"></p>
+    </form>
+  </div>
+
   <div class="demo-banner">
     <b>Demo</b> — werkt met <b>echte RDW-gegevens</b>, rechtstreeks uit de browser.
     De waardering is hier een rekenmodel-indicatie; de volledige app vervangt dat
