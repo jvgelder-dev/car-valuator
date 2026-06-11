@@ -169,6 +169,11 @@ th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; colo
 }
 .logout-btn:hover { background: rgba(255, 255, 255, 0.22); }
 
+/* Lijst-acties en gevaar-knop */
+.lijst-acties { display: flex; gap: 8px; flex-wrap: wrap; }
+button.danger { background: #fee2e2; color: #b91c1c; }
+button.danger:hover { background: #fecaca; }
+
 /* Import-paneel */
 .import-panel { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
 .import-panel summary { cursor: pointer; font-size: 0.9rem; color: var(--accent); font-weight: 600; }

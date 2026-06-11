@@ -201,6 +201,19 @@ $('exportBtn').addEventListener('click', () => {
   window.location.href = '/api/export';
 });
 
+$('clearAllBtn').addEventListener('click', async () => {
+  const cars = await api('/api/cars');
+  if (!cars.length) return setStatus('De lijst is al leeg.');
+  if (!confirm(`Weet je zeker dat je alle ${cars.length} auto's wilt wissen? Dit kan niet ongedaan worden gemaakt.`)) return;
+  try {
+    await api('/api/cars', { method: 'DELETE' });
+    setStatus('Lijst gewist.');
+    await laadCars();
+  } catch (err) {
+    setStatus(err.message, true);
+  }
+});
+
 function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

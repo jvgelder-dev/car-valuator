@@ -250,6 +250,16 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
+// --- Wis alles (leegt de in de browser opgeslagen lijst) ---
+$('clearAllBtn').addEventListener('click', () => {
+  const aantal = load().length;
+  if (!aantal) return setStatus('De lijst is al leeg.');
+  if (!confirm(`Weet je zeker dat je alle ${aantal} auto's wilt wissen? Dit kan niet ongedaan worden gemaakt.`)) return;
+  localStorage.removeItem(STORE_KEY);
+  render();
+  setStatus('Lijst gewist.');
+});
+
 // --- Meerdere kentekens importeren ---
 function parseKentekens(text) {
   return [...new Set(

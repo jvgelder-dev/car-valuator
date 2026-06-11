@@ -99,6 +99,10 @@ export function deleteCar(id) {
   return db.prepare('DELETE FROM cars WHERE id = ?').run(id).changes > 0;
 }
 
+export function deleteAllCars() {
+  return db.prepare('DELETE FROM cars').run().changes;
+}
+
 // Zet objecten/arrays om naar JSON-tekst voor opslag en vul ontbrekende velden.
 function normalize(data) {
   const out = { ...data };

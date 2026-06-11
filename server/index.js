@@ -2,7 +2,7 @@ import express from 'express';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { listCars, getCar, createCar, updateCar, deleteCar } from './db.js';
+import { listCars, getCar, createCar, updateCar, deleteCar, deleteAllCars } from './db.js';
 import { fetchRdw } from './rdw.js';
 import { schatKilometerstand } from './cbs.js';
 import { bepaalWaardering } from './valuation.js';
@@ -109,6 +109,11 @@ app.put('/api/cars/:id', requireAuth, wrap(async (req, res) => {
   const car = updateCar(req.params.id, data);
   if (!car) return res.status(404).json({ error: 'Auto niet gevonden' });
   res.json(car);
+}));
+
+app.delete('/api/cars', requireAuth, wrap(async (_req, res) => {
+  const aantal = deleteAllCars();
+  res.json({ verwijderd: aantal });
 }));
 
 app.delete('/api/cars/:id', requireAuth, wrap(async (req, res) => {
