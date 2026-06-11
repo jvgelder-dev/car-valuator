@@ -1,0 +1,19 @@
+{
+  "name": "car-valuator",
+  "version": "1.0.0",
+  "description": "Auto-database met RDW-gegevens en AI-waardering (markt- en liquidatiewaarde)",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.69.0",
+    "better-sqlite3": "^12.2.0",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0"
+  }
+}
