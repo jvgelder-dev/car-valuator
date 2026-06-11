@@ -9,24 +9,6 @@ const $ = (id) => document.getElementById(id);
 const STORE_KEY = 'autotaxatie_demo_cars';
 const HUIDIG_JAAR = new Date().getFullYear();
 
-// --- Toegangscode-overlay voor de demo ---
-// Let op: dit is een lichte drempel op een openbare pagina, geen harde beveiliging
-// (de code is een SHA-256-hash, maar een statische publieke pagina is nooit echt
-// af te schermen). Voor echte afscherming: de volledige app met server-login of VPN.
-const DEMO_PIN_HASH = '8f55b929ae5e8a5247ddeba35274a1a7f206fbf21b379f9e281edbc9a33b8e4e';
-async function sha256(tekst) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tekst));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-function ontgrendel() { $('pinGate')?.classList.add('hidden'); }
-if (sessionStorage.getItem('demo_unlocked') === '1') ontgrendel();
-$('pinForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const ingevoerd = (await sha256($('gatePin').value.trim())) === DEMO_PIN_HASH;
-  if (ingevoerd) { sessionStorage.setItem('demo_unlocked', '1'); ontgrendel(); }
-  else { $('gateError').textContent = 'Onjuiste toegangscode'; $('gatePin').value = ''; }
-});
-
 const euro = (n) => (n == null ? null : '€ ' + Number(Math.round(n)).toLocaleString('nl-NL'));
 const km = (n) => (n == null ? '—' : Number(n).toLocaleString('nl-NL') + ' km');
 

@@ -107,6 +107,21 @@ De `[mounts]`-sectie in `fly.toml` zorgt dat je auto-lijst (`data/cars.db`)
 bewaard blijft tussen herstarts. Beveilig de URL eventueel met een wachtwoord/VPN
 voordat je hem publiek deelt — er zit geen ingebouwde login op.
 
+## Versleutelde demo (GitHub Pages)
+
+De publieke demo in `docs/` is versleuteld: zonder de toegangscode is er geen
+bruikbare pagina-inhoud, alleen ciphertext. De bron staat in `demo-src/`. Na een
+wijziging aan de demo de schil opnieuw bouwen:
+
+```bash
+DEMO_CODE=048511 node scripts/encrypt-demo.mjs   # schrijft docs/index.html
+```
+
+Let op: een 6-cijferige code is met de ciphertext in de hand te brute-forcen.
+Gebruik een langere code voor echte sterkte (`DEMO_CODE=...`). Omdat de repo
+openbaar is voor Pages, staat de bron sowieso publiek; voor harde afscherming:
+de volledige app met server-login, of de pagina achter Cloudflare Access.
+
 ## Hoe het werkt
 
 | Onderdeel        | Bron                                                                 |

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto Taxatie — Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .demo-banner {
+      background: #fef3c7; color: #92400e; border-bottom: 1px solid #fde68a;
+      padding: 8px 16px; font-size: 0.82rem; text-align: center;
+    }
+    .demo-banner b { color: #78350f; }
+  </style>
+</head>
+<body>
+  <div class="demo-banner">
+    <b>Demo</b> — werkt met <b>echte RDW-gegevens</b>, rechtstreeks uit de browser.
+    De waardering is hier een rekenmodel-indicatie; de volledige app vervangt dat
+    door AI die live advertenties en veilingen opzoekt. Je lijst wordt lokaal in
+    je browser bewaard.
+  </div>
+  <header>
+    <h1>Auto Taxatie</h1>
+    <p class="sub">RDW-gegevens · markt- &amp; liquidatiewaarde-indicatie</p>
+  </header>
+
+  <main>
+    <section class="card invoer">
+      <h2>Auto toevoegen</h2>
+      <form id="addForm">
+        <div class="row">
+          <label>
+            Kenteken
+            <input type="text" id="kenteken" placeholder="bijv. 12-ABC-3" autocomplete="off" />
+          </label>
+          <button type="button" id="rdwBtn" class="secondary">RDW ophalen</button>
+        </div>
+
+        <div id="rdwPreview" class="preview hidden"></div>
+
+        <details id="handmatig">
+          <summary>Handmatig invoeren (niet-NL voertuig)</summary>
+          <div class="grid">
+            <label>Merk<input type="text" id="merk" /></label>
+            <label>Model/uitvoering<input type="text" id="handelsbenaming" /></label>
+            <label>Voertuigsoort
+              <select id="voertuigsoort">
+                <option value="Personenauto">Personenauto</option>
+                <option value="Bedrijfsauto">Bestel-/bedrijfsauto</option>
+                <option value="Vrachtauto">Vrachtauto</option>
+                <option value="Trekker">Trekker</option>
+              </select>
+            </label>
+            <label>Brandstof<input type="text" id="brandstof" placeholder="Benzine / Diesel / Elektrisch" /></label>
+            <label>Bouwjaar<input type="number" id="bouwjaar" min="1950" max="2100" /></label>
+          </div>
+        </details>
+
+        <div class="row">
+          <label>
+            Kilometerstand
+            <input type="number" id="km_stand" min="0" placeholder="leeg = CBS-schatting" />
+          </label>
+          <button type="submit" class="primary">Toevoegen aan lijst</button>
+        </div>
+        <p class="hint">Laat de kilometerstand leeg om automatisch te schatten op basis van CBS-cijfers (2024).</p>
+      </form>
+
+      <details id="importPanel" class="import-panel">
+        <summary>Meerdere kentekens importeren</summary>
+        <p class="hint">Plak één kenteken per regel (of gescheiden door komma/spatie), of upload een .txt/.csv-bestand.</p>
+        <textarea id="importText" rows="5" placeholder="12-ABC-3&#10;45-XYZ-6&#10;..."></textarea>
+        <div class="row">
+          <input type="file" id="importFile" accept=".txt,.csv" />
+          <button type="button" id="importBtn" class="primary">Importeren</button>
+        </div>
+        <p id="importStatus" class="status"></p>
+      </details>
+    </section>
+
+    <section class="card lijst">
+      <div class="lijst-head">
+        <h2>Mijn auto's (<span id="count">0</span>)</h2>
+        <div class="lijst-acties">
+          <button id="valuateAllBtn" class="primary" type="button">Waardeer alles</button>
+          <button id="exportBtn" class="secondary" type="button">Exporteer (Excel)</button>
+          <button id="clearAllBtn" class="danger" type="button">Wis alles</button>
+        </div>
+      </div>
+      <div id="status" class="status"></div>
+      <div class="table-wrap">
+        <table id="carsTable">
+          <thead>
+            <tr>
+              <th>Voertuig</th>
+              <th>Bouwjaar</th>
+              <th>Km-stand</th>
+              <th>Marktwaarde</th>
+              <th>Liquidatiewaarde</th>
+              <th>Acties</th>
+            </tr>
+          </thead>
+          <tbody id="carsBody"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="empty hidden">Nog geen auto's toegevoegd. Probeer een kenteken in te voeren.</p>
+    </section>
+  </main>
+
+  <div id="detailModal" class="modal hidden">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
