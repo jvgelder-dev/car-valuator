@@ -41,6 +41,8 @@ Gebruik websearch om actuele, vergelijkbare gegevens te vinden:
 
 Bepaal de liquidatiewaarde door de marktwaarde te delen door een factor tussen 1,35 en 1,45 (afhankelijk van de auto: courante, gewilde auto's dichter bij 1,35; minder courante dichter bij 1,45). Dus: liquidatiewaarde = marktwaarde ÷ 1,35 tot 1,45. Gebruik de veilingresultaten als toets/onderbouwing, maar houd deze deler aan. Dit is een indicatie, geen formele taxatie.
 
+Houd bij je inschatting rekening met de afschrijvingskarakteristiek per categorie (degressief verloop): kleine stadsauto's (A-segment) en hybrides/pick-ups zijn waardevast (~10%/jr); B/C-gezinsauto's gemiddeld (10–15%/jr); D-segment en premium/luxe schrijven sneller af (15–20%/jr); volledig elektrische auto's verliezen momenteel het meest (~49–57% in 5 jaar, markt daalt sinds 2023); bestelauto's volgen de zakelijke vuistregel (~18%/jr lineair, na 5 jaar nog ~10%). Gebruik dit als toets op je gevonden advertentieprijzen.
+
 Geef je redenering kort weer. Sluit je antwoord AF met exact één JSON-blok in dit formaat (bedragen in hele euro's, zonder punten of valutateken):
 
 \`\`\`json
@@ -49,6 +51,7 @@ Geef je redenering kort weer. Sluit je antwoord AF met exact één JSON-blok in 
   "marktwaarde_max": 0,
   "liquidatiewaarde_min": 0,
   "liquidatiewaarde_max": 0,
+  "grondslag": "kort: waarop is de waardering gestoeld (aantal/spreiding vergelijkbare advertenties, eventuele veilingdata, segment en afschrijvingskarakteristiek)",
   "toelichting": "korte onderbouwing in het Nederlands",
   "bronnen": ["url of omschrijving", "..."]
 }
@@ -114,6 +117,7 @@ export async function bepaalWaardering(auto) {
     liquidatiewaarde_min: toInt(data.liquidatiewaarde_min),
     liquidatiewaarde_max: toInt(data.liquidatiewaarde_max),
     waardering_toelichting: data.toelichting || null,
+    waardering_grondslag: data.grondslag || null,
     waardering_bronnen: Array.isArray(data.bronnen) ? data.bronnen : [],
     waardering_datum: new Date().toISOString(),
   };

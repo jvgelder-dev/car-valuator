@@ -21,6 +21,7 @@ export async function bouwExcel(cars) {
     { header: 'Marktwaarde max (€)', key: 'marktwaarde_max', width: 18 },
     { header: 'Liquidatie min (€)', key: 'liquidatiewaarde_min', width: 18 },
     { header: 'Liquidatie max (€)', key: 'liquidatiewaarde_max', width: 18 },
+    { header: 'Grondslag', key: 'waardering_grondslag', width: 50 },
     { header: 'Toelichting', key: 'waardering_toelichting', width: 50 },
     { header: 'Waardering datum', key: 'waardering_datum', width: 20 },
     { header: 'Notities', key: 'notities', width: 30 },

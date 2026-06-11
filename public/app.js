@@ -185,6 +185,7 @@ function toonDetails(car) {
       <dt>Liquidatiewaarde</dt><dd>${waardeCel(car.liquidatiewaarde_min, car.liquidatiewaarde_max, 'liq')}</dd>
       <dt>Bepaald op</dt><dd>${car.waardering_datum ? new Date(car.waardering_datum).toLocaleString('nl-NL') : '—'}</dd>
     </dl>
+    <p><b>Grondslag</b><br>${esc(car.waardering_grondslag || '—')}</p>
     <p><b>Toelichting</b><br>${esc(car.waardering_toelichting || '—')}</p>
     ${bronnen ? `<p><b>Bronnen</b></p><ul class="bronnen">${bronnen}</ul>` : ''}
     <p class="hint">Dit is een indicatie, geen formele taxatie.</p>

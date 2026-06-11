@@ -32,6 +32,7 @@ db.exec(`
     liquidatiewaarde_min INTEGER,
     liquidatiewaarde_max INTEGER,
     waardering_toelichting TEXT,
+    waardering_grondslag TEXT,    -- korte beschrijving waar de waardering op gestoeld is
     waardering_bronnen TEXT,      -- JSON array
     waardering_datum TEXT,
     rdw_raw TEXT,                 -- JSON
@@ -40,6 +41,12 @@ db.exec(`
     updated_at TEXT DEFAULT (datetime('now'))
   );
 `);
+
+// Migratie: voeg waardering_grondslag toe aan bestaande databases.
+const kolommen = db.prepare('PRAGMA table_info(cars)').all().map((c) => c.name);
+if (!kolommen.includes('waardering_grondslag')) {
+  db.exec('ALTER TABLE cars ADD COLUMN waardering_grondslag TEXT');
+}
 
 function parseRow(row) {
   if (!row) return row;
@@ -87,7 +94,8 @@ export function updateCar(id, data) {
       km_stand=@km_stand, km_bron=@km_bron,
       marktwaarde_min=@marktwaarde_min, marktwaarde_max=@marktwaarde_max,
       liquidatiewaarde_min=@liquidatiewaarde_min, liquidatiewaarde_max=@liquidatiewaarde_max,
-      waardering_toelichting=@waardering_toelichting, waardering_bronnen=@waardering_bronnen,
+      waardering_toelichting=@waardering_toelichting, waardering_grondslag=@waardering_grondslag,
+      waardering_bronnen=@waardering_bronnen,
       waardering_datum=@waardering_datum, rdw_raw=@rdw_raw, notities=@notities,
       updated_at=@updated_at
     WHERE id=@id
@@ -114,8 +122,8 @@ function normalize(data) {
     'kenteken', 'merk', 'handelsbenaming', 'voertuigsoort', 'brandstof', 'bouwjaar',
     'datum_eerste_toelating', 'catalogusprijs', 'massa_ledig', 'apk_vervaldatum',
     'km_stand', 'km_bron', 'marktwaarde_min', 'marktwaarde_max', 'liquidatiewaarde_min',
-    'liquidatiewaarde_max', 'waardering_toelichting', 'waardering_bronnen',
-    'waardering_datum', 'rdw_raw', 'notities',
+    'liquidatiewaarde_max', 'waardering_toelichting', 'waardering_grondslag',
+    'waardering_bronnen', 'waardering_datum', 'rdw_raw', 'notities',
   ];
   for (const f of fields) if (out[f] === undefined) out[f] = null;
   return out;

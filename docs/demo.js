@@ -57,18 +57,75 @@ function schatKilometerstand({ voertuigsoort, brandstof, bouwjaar }) {
 }
 
 // --- Rekenmodel-waardering (zonder server) ---
+// Afschrijvingsprofiel per categorie (voertuigtype + brandstof + prijssegment),
+// op basis van ANWB/BOVAG, iSeeCars, Belastingdienst en marktdata (Auto1/Gaspedaal).
+function afschrijvingscategorie(car) {
+  const soort = (car.voertuigsoort || '').toLowerCase();
+  const fuel = (car.brandstof || '').toLowerCase();
+  const cat = car.catalogusprijs || 0;
+
+  if (soort.includes('bedrijfs') || soort.includes('bestel')) {
+    return { naam: 'Bestel-/bedrijfsauto', type: 'lineair', perJaar: 0.18, vloer: 0.08,
+      bron: 'Rabobank/Univé: ~18%/jr lineair, na 5 jr nog ~10% restwaarde' };
+  }
+  if (soort.includes('vracht') || soort.includes('trekker') || soort.includes('oplegger')) {
+    return { naam: 'Vrachtauto/trekker', type: 'lineair', perJaar: 0.12, vloer: 0.10,
+      bron: 'Commerciële schatting (intensief gebruik)' };
+  }
+  if (fuel.includes('elektr')) {
+    return { naam: 'Elektrisch (BEV)', type: 'degressief', rates: [0.24, 0.18, 0.12, 0.10],
+      bron: 'iSeeCars/Gaspedaal: BEV ~49–57% verlies in 5 jr; markt daalt sinds 2023 ~30%' };
+  }
+  if (fuel.includes('hybride')) {
+    return { naam: 'Hybride', type: 'degressief', rates: [0.12, 0.10, 0.07, 0.05],
+      bron: 'iSeeCars/Auto1: hybride waardevast, ~35% verlies in 5 jr (+2,2% j-o-j)' };
+  }
+  if (cat && cat < 22000) {
+    return { naam: 'A-segment (stadsauto)', type: 'degressief', rates: [0.18, 0.13, 0.10, 0.07],
+      bron: 'ANWB Koerslijst: ~10%/jr, meest waardevast (~40–50% verlies in 5 jr)' };
+  }
+  if (cat && cat < 45000) {
+    return { naam: 'B/C-segment (compact/gezins)', type: 'degressief', rates: [0.20, 0.15, 0.11, 0.08],
+      bron: 'ANWB/AutoRAI: 10–15%/jr, hoge occasionvraag (~37–50% in 5 jr)' };
+  }
+  if (cat && cat < 60000) {
+    return { naam: 'D-segment (hogere middenklasse)', type: 'degressief', rates: [0.24, 0.17, 0.13, 0.09],
+      bron: 'iSeeCars: 15–18%/jr, bovengemiddeld verlies' };
+  }
+  if (cat && cat >= 60000) {
+    return { naam: 'E/F-segment (premium/luxe)', type: 'degressief', rates: [0.22, 0.16, 0.10, 0.08],
+      bron: 'iSeeCars: luxe ~48% verlies in 5 jr, hoogste absolute afschrijving' };
+  }
+  return { naam: 'Personenauto (gemiddeld)', type: 'degressief', rates: [0.25, 0.18, 0.13, 0.09],
+    bron: 'ANWB/Univé/iSeeCars: gemiddeld 10–20%/jr, ~42% restwaarde na 5 jr' };
+}
+
+// Restwaarde als fractie van de catalogusprijs (degressief of lineair).
+function restwaarde(profiel, leeftijd) {
+  if (leeftijd <= 0) return 1;
+  if (profiel.type === 'lineair') return Math.max(profiel.vloer, 1 - profiel.perJaar * leeftijd);
+  let r = 1;
+  for (let j = 1; j <= leeftijd; j++) {
+    const d = j === 1 ? profiel.rates[0] : j === 2 ? profiel.rates[1] : j <= 5 ? profiel.rates[2] : profiel.rates[3];
+    r *= (1 - d);
+  }
+  return Math.max(0.05, r);
+}
+
 function rekenWaardering(car) {
   const cat = car.catalogusprijs;
   if (!cat) {
     return {
-      toelichting: 'Geen catalogusprijs bekend — vul handmatig een richtprijs in of gebruik de volledige app met AI-waardering.',
+      waardering_toelichting: 'Geen catalogusprijs bekend — vul handmatig een richtprijs in of gebruik de volledige app met AI-waardering.',
+      waardering_grondslag: 'Geen catalogusprijs uit RDW beschikbaar; het rekenmodel kan geen waarde bepalen.',
+      waardering_datum: new Date().toISOString(),
     };
   }
   const leeftijd = Math.max(0, HUIDIG_JAAR - (car.bouwjaar || HUIDIG_JAAR));
-  // Afschrijvingscurve: ~18% bij aanschaf, daarna ~14%/jaar, vloer 8%.
-  const behoud = Math.max(0.08, 0.82 * Math.pow(0.86, leeftijd));
+  const profiel = afschrijvingscategorie(car);
+  const behoud = restwaarde(profiel, leeftijd);
 
-  // Km-correctie t.o.v. verwachte stand.
+  // Km-correctie t.o.v. verwachte stand (CBS).
   const verwacht = schatKilometerstand(car) || 1;
   const km0 = car.km_stand || verwacht;
   let kmFactor = 1 + ((verwacht - km0) / verwacht) * 0.15;
@@ -77,14 +134,17 @@ function rekenWaardering(car) {
   const markt = cat * behoud * kmFactor;
   const marktMin = markt * 0.9;
   const marktMax = markt * 1.1;
+
+  const grondslag = `Categorie: ${profiel.naam}. Afschrijving ${profiel.type}; restwaarde ${(behoud * 100).toFixed(0)}% van catalogusprijs (€ ${Number(cat).toLocaleString('nl-NL')}) na ${leeftijd} jr. Km-correctie ${(kmFactor * 100).toFixed(0)}% t.o.v. CBS-verwachting (~${Number(verwacht).toLocaleString('nl-NL')} km). Liquidatiewaarde = marktwaarde ÷ 1,35–1,45. Basis: ${profiel.bron}.`;
+
   return {
     marktwaarde_min: Math.round(marktMin / 50) * 50,
     marktwaarde_max: Math.round(marktMax / 50) * 50,
-    // Liquidatiewaarde = marktwaarde gedeeld door 1,35 (hoog) tot 1,45 (laag).
     liquidatiewaarde_min: Math.round((marktMin / 1.45) / 50) * 50,
     liquidatiewaarde_max: Math.round((marktMax / 1.35) / 50) * 50,
-    toelichting: `Rekenmodel-indicatie: catalogusprijs € ${Number(cat).toLocaleString('nl-NL')} × waardebehoud ${(behoud * 100).toFixed(0)}% (leeftijd ${leeftijd} jr) × km-correctie ${(kmFactor * 100).toFixed(0)}%. Liquidatiewaarde = marktwaarde ÷ 1,35–1,45. Indicatie, geen taxatie.`,
-    waardering_bronnen: ['Rekenmodel op basis van RDW-catalogusprijs en CBS-kilometrage'],
+    waardering_toelichting: `Rekenmodel-indicatie voor ${profiel.naam.toLowerCase()}: catalogusprijs € ${Number(cat).toLocaleString('nl-NL')} × restwaarde ${(behoud * 100).toFixed(0)}% (leeftijd ${leeftijd} jr) × km-correctie ${(kmFactor * 100).toFixed(0)}%. Liquidatiewaarde = marktwaarde ÷ 1,35–1,45. Indicatie, geen taxatie.`,
+    waardering_grondslag: grondslag,
+    waardering_bronnen: ['Rekenmodel: RDW-catalogusprijs + CBS-kilometrage', profiel.bron],
     waardering_datum: new Date().toISOString(),
   };
 }
@@ -241,6 +301,7 @@ function toonDetails(car) {
       <dt>Marktwaarde</dt><dd>${waardeCel(car.marktwaarde_min, car.marktwaarde_max, 'markt')}</dd>
       <dt>Liquidatiewaarde</dt><dd>${waardeCel(car.liquidatiewaarde_min, car.liquidatiewaarde_max, 'liq')}</dd>
     </dl>
+    <p><b>Grondslag</b><br>${esc(car.waardering_grondslag || '—')}</p>
     <p><b>Toelichting</b><br>${esc(car.waardering_toelichting || '—')}</p>
     ${bronnen ? `<p><b>Bronnen</b></p><ul class="bronnen">${bronnen}</ul>` : ''}
     <p class="hint">Demo-indicatie via rekenmodel. De volledige app gebruikt AI met live markt- en veilingdata.</p>`;
