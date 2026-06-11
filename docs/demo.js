@@ -250,6 +250,17 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
+// --- Waardeer alles (rekenmodel voor alle nog niet gewaardeerde auto's) ---
+$('valuateAllBtn').addEventListener('click', () => {
+  const cars = load();
+  const teDoen = cars.filter((c) => !c.waardering_datum);
+  if (!cars.length) return setStatus('Nog geen voertuigen in de lijst.', true);
+  if (!teDoen.length) return setStatus('Alle voertuigen zijn al gewaardeerd.');
+  for (const car of teDoen) Object.assign(car, rekenWaardering(car));
+  save(cars); render();
+  setStatus(`${teDoen.length} voertuig(en) gewaardeerd (rekenmodel).`);
+});
+
 // --- Wis alles (leegt de in de browser opgeslagen lijst) ---
 $('clearAllBtn').addEventListener('click', () => {
   const aantal = load().length;

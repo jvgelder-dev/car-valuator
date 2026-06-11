@@ -201,6 +201,30 @@ $('exportBtn').addEventListener('click', () => {
   window.location.href = '/api/export';
 });
 
+$('valuateAllBtn').addEventListener('click', async () => {
+  const cars = await api('/api/cars');
+  const teDoen = cars.filter((c) => !c.waardering_datum);
+  if (!cars.length) return setStatus('Nog geen voertuigen in de lijst.', true);
+  if (!teDoen.length) return setStatus('Alle voertuigen zijn al gewaardeerd. Gebruik "Herwaardeer" per auto om opnieuw te bepalen.');
+  if (!confirm(`${teDoen.length} voertuig(en) waarderen met AI. Dit kost een paar tientjes seconden per auto en verbruikt API-tegoed. Doorgaan?`)) return;
+
+  const btn = $('valuateAllBtn'); btn.disabled = true;
+  let ok = 0; const mislukt = [];
+  for (let i = 0; i < teDoen.length; i++) {
+    setStatus(`Waarderen: ${i + 1}/${teDoen.length} (${teDoen[i].merk || teDoen[i].kenteken || '?'})…`);
+    try {
+      await api(`/api/cars/${teDoen[i].id}/valuate`, { method: 'POST' });
+      ok++;
+      await laadCars();
+    } catch (err) {
+      mislukt.push(teDoen[i].merk || teDoen[i].kenteken || teDoen[i].id);
+    }
+  }
+  btn.disabled = false;
+  setStatus(`Klaar: ${ok} gewaardeerd${mislukt.length ? `, ${mislukt.length} mislukt (${mislukt.join(', ')})` : ''}.`, mislukt.length > 0);
+  await laadCars();
+});
+
 $('clearAllBtn').addEventListener('click', async () => {
   const cars = await api('/api/cars');
   if (!cars.length) return setStatus('De lijst is al leeg.');
