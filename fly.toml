@@ -1,0 +1,26 @@
+# Fly.io-configuratie. Pas 'app' aan naar een eigen, unieke naam.
+# Deploy: zie de sectie "Online zetten" in README.md.
+app = "auto-taxatie"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+# Persistente schijf zodat de SQLite-database (data/cars.db) bewaard blijft.
+[mounts]
+  source = "car_data"
+  destination = "/app/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

@@ -43,6 +43,29 @@ In `.env`:
 \* Alleen nodig voor de waardering. RDW ophalen, opslaan en exporteren werkt
 ook zonder API-sleutel.
 
+## Online zetten (mobiel gebruik op locatie)
+
+Wil je de app vanaf je telefoon gebruiken zonder je laptop, zet hem dan online.
+Er zit een `Dockerfile` bij (werkt op elk platform: Render, Railway, een eigen
+VPS) plus een kant-en-klare `fly.toml` voor [Fly.io](https://fly.io), dat goed
+omgaat met de SQLite-database en goedkoop is voor één gebruiker.
+
+**Met Fly.io:**
+
+```bash
+# eenmalig: installeer flyctl en log in
+fly auth login
+
+# pas in fly.toml de regel app = "..." aan naar een unieke naam, daarna:
+fly launch --copy-config --no-deploy   # maakt de app + het volume aan
+fly secrets set ANTHROPIC_API_KEY=sk-ant-...
+fly deploy
+```
+
+De `[mounts]`-sectie in `fly.toml` zorgt dat je auto-lijst (`data/cars.db`)
+bewaard blijft tussen herstarts. Beveilig de URL eventueel met een wachtwoord/VPN
+voordat je hem publiek deelt — er zit geen ingebouwde login op.
+
 ## Hoe het werkt
 
 | Onderdeel        | Bron                                                                 |
